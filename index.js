@@ -253,7 +253,7 @@ function insert(node, parent, tight) {
         index = -1;
 
         while (++index < length) {
-            children[index].loose = isLoose;
+            children[index].loose = false // isLoose;
         }
     }
 }
