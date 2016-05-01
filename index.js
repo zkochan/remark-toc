@@ -15,7 +15,6 @@
  */
 
 var slug = require('remark-slug');
-var toString = require('mdast-util-to-string');
 
 /*
  * Constants.
@@ -357,3 +356,13 @@ function attacher(remark, options) {
  */
 
 module.exports = attacher;
+
+function valueOf(node) {
+    return node && node.value || '';
+}
+
+function toString(node) {
+    return (valueOf(node) ||
+        (node.children && node.children.map(toString).join('')) ||
+        '').trim();
+}
