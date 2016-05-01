@@ -121,7 +121,7 @@ function search(root, expression, maxDepth) {
           map.push({
               'depth': child.depth,
               'value': value,
-              'id': child.data.htmlAttributes.id
+              'id': getId(child)
           });
       }
 
@@ -143,6 +143,14 @@ function search(root, expression, maxDepth) {
         'index': headingIndex || null,
         'map': map
     };
+}
+
+function getId(child) {
+  if (child.children && child.children[0].type === 'html') {
+    var match = child.children[0].value.match(/name="([a-zA-Z0-9\-_]+)"/)
+    if (match) return match[1]
+  }
+  return child.data.htmlAttributes.id
 }
 
 /**
@@ -363,6 +371,6 @@ function valueOf(node) {
 
 function toString(node) {
     return (valueOf(node) ||
-        (node.children && node.children.map(toString).join('')) ||
+        (node.children && node.children.filter(child => child.type !== 'html').map(toString).join('')) ||
         '').trim();
 }
