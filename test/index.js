@@ -17,7 +17,7 @@
 var test = require('tape');
 var fs = require('fs');
 var path = require('path');
-var remark = require('remark');
+var remark = require('@zkochan/remark');
 var toc = require('..');
 
 /*
@@ -80,9 +80,8 @@ test('Fixtures', function (t) {
         var result;
 
         config = exists(config) ? JSON.parse(read(config, 'utf-8')) : {};
-        result = process(input, config);
-
-        t.equal(result, output, 'should work on `' + fixture + '`');
+        process(input, config)
+          .then(res => t.equal(res.result, output, 'should work on `' + fixture + '`'));
     });
 
     t.end();

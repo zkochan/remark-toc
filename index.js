@@ -60,7 +60,8 @@ function isOpeningHeading(node, depth, expression) {
  * @return {boolean} - Whether znode is a closing heading.
  */
 function isClosingHeading(node, depth) {
-    return depth && node && node.type === HEADING && node.depth <= depth;
+    return node && (depth && node.type === HEADING && node.depth <= depth ||
+      node.type === 'markdownScript');
 }
 
 /**
@@ -86,31 +87,46 @@ function search(root, expression, maxDepth) {
     while (++index < length) {
         child = root.children[index];
 
-        if (child.type !== HEADING) {
+        if ([HEADING, 'markdownScript'].indexOf(child.type) === -1) {
             continue;
         }
 
-        value = toString(child);
-
-        if (lookingForToc) {
-            if (isClosingHeading(child, depth)) {
-                closingIndex = index;
-                lookingForToc = false;
-            }
-
-            if (isOpeningHeading(child, depth, expression)) {
-                headingIndex = index + 1;
-                depth = child.depth;
-            }
+        if (headingIndex && isClosingHeading(child, depth)) {
+            closingIndex = index;
+            searchChildren(root.children.slice(index))
+            break
         }
 
-        if (!lookingForToc && value && child.depth <= maxDepth) {
-            map.push({
-                'depth': child.depth,
-                'value': value,
-                'id': child.data.htmlAttributes.id
-            });
+        if (isOpeningHeading(child, depth, expression)) {
+            headingIndex = index + 1;
+            depth = child.depth;
         }
+    }
+
+    function searchChildren (children) {
+      if (!children || !children.length) return
+
+      var child = children.shift();
+
+      if ([HEADING, 'markdownScript'].indexOf(child.type) === -1) {
+          return searchChildren(children)
+      }
+
+      if (child.type === 'markdownScript') {
+        return searchChildren(child.children.concat(children))
+      }
+
+      var value = toString(child);
+
+      if (value && child.depth <= maxDepth) {
+          map.push({
+              'depth': child.depth,
+              'value': value,
+              'id': child.data.htmlAttributes.id
+          });
+      }
+
+      return searchChildren(children)
     }
 
     if (headingIndex) {
@@ -121,7 +137,6 @@ function search(root, expression, maxDepth) {
         /*
          * Remove current TOC.
          */
-
         root.children.splice(headingIndex, closingIndex - headingIndex);
     }
 
